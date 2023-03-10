@@ -1,8 +1,9 @@
 from requests import get
 from bs4 import BeautifulSoup
 from json import load, dumps
-from os import path
+from os import path, system
 from re import compile
+import inquirer
 
    
 def get_channels():
@@ -22,7 +23,7 @@ def get_channels():
 
 def get_channel_content(url, content={'title': '', 'videos': []}):
     channel_content = content
-    channel_html = get(url)
+    channel_html = get(url) #TODO: Add random user-agent for each request
     channel_html.encoding = 'utf-8'
     sp = BeautifulSoup(channel_html.text, 'html.parser')
 
@@ -45,10 +46,51 @@ def get_channel_content(url, content={'title': '', 'videos': []}):
     return channel_content
 
 
-def main():
-    channels = get_channels()
-    ch_content = get_channel_content(channels[0]['url'])
-    print(ch_content)
+def main(cached_channels=[], cached_content=[]):
+    channels = cached_channels if len(cached_channels) != 0 else get_channels()
+    channel_titles = []
+    video_titles = []
+    service_answers = {'EXIT': 'Сорян, ошибся дверью =/', 'PREV': 'Мне на этаж ниже (o_o)/'}
+
+    for ch in channels:
+        channel_titles.append(ch['title'])
+    channel_titles.append(service_answers['EXIT'])
+
+    channels_list = [inquirer.List(
+        'channel',
+        message='Ну что, дружок-пирожок, кого будем смотреть?',
+        choices=channel_titles
+    )]
+
+    channel_choice = inquirer.prompt(channels_list)
+
+    if channel_choice['channel'] == service_answers['EXIT']:
+        exit(0)
+    else:
+        system('clear')
+        choosen_channel_dict = [ch for ch in channels if channel_choice['channel'] == ch['title']]
+        choosen_channel_content = cached_content if len(cached_content) != 0 else get_channel_content(url=choosen_channel_dict[0]['url'])
+
+        for video in choosen_channel_content['videos']:
+            video_titles.append(video['title'])
+        video_titles.append(service_answers['PREV'])
+
+        video_list = [inquirer.List(
+            'video',
+            message='Хорошо, кожевник. А видос какой?',
+            choices=video_titles
+        )]
+
+        video_choice = inquirer.prompt(video_list)
+
+        if video_choice['video'] == service_answers['PREV']:
+            system('clear')
+            choosen_channel_content = [] #TODO: Think how to cache parsed content correctly
+            main(cached_channels=channels, cached_content=choosen_channel_content)
+        else:
+            choosen_video_dict = [v for v in choosen_channel_content['videos'] if video_choice['video'] == v['title']]
+            system('clear')
+            system(f'mpv {choosen_video_dict[0]["url"]}')
     
 
 if __name__ == '__main__':
