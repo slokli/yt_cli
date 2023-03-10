@@ -1,0 +1,6 @@
+venv
+dist
+build
+.DS_store
+.editorconfig
+
