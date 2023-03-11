@@ -4,15 +4,22 @@ from json import load, dumps
 from os import path, system
 from re import compile
 import inquirer
+from random import choice
 
-   
+def get_random_user_agent():
+    agents_list = []
+    with open(path.abspath('user-agents.txt')) as agents:
+        for agent in agents.readlines():
+            agents_list.append(agent.replace('\n', ''))
+    return choice(agents_list)
+
 def get_channels():
     channels = []
     try:
         with open(path.abspath('channels.json')) as list:
             for id in load(list):
                 url = f'https://yewtu.be/channel/{id}'
-                channel_html = get(url)
+                channel_html = get(url, headers={'User-Agent': get_random_user_agent()})
                 channel_html.encoding = 'utf-8'
                 sp = BeautifulSoup(channel_html.text, 'html.parser')
                 channel_title = sp.find('div', class_='channel-profile').find('span')
@@ -23,7 +30,7 @@ def get_channels():
 
 def get_channel_content(url, content={'title': '', 'videos': []}):
     channel_content = content
-    channel_html = get(url) #TODO: Add random user-agent for each request
+    channel_html = get(url, headers={'User-Agent': get_random_user_agent()})
     channel_html.encoding = 'utf-8'
     sp = BeautifulSoup(channel_html.text, 'html.parser')
 
@@ -31,7 +38,7 @@ def get_channel_content(url, content={'title': '', 'videos': []}):
     channel_content['title'] = channel_title.get_text()
     
     video_urls =  sp.find_all('a', href=compile('^\/watch\?v='), title=False)
-    next_page_btn = sp.find('a', href=compile('^/channel/.*\?continuation='))
+    next_page_btn = sp.find('a', href=compile('^/channel/.*\?continuation=')) 
 
     for index, url in enumerate(video_urls):
         channel_content['videos'].append({
@@ -46,7 +53,7 @@ def get_channel_content(url, content={'title': '', 'videos': []}):
     return channel_content
 
 
-def main(cached_channels=[], cached_content=[]):
+def main(cached_channels=[]):
     channels = cached_channels if len(cached_channels) != 0 else get_channels()
     channel_titles = []
     video_titles = []
@@ -69,7 +76,8 @@ def main(cached_channels=[], cached_content=[]):
     else:
         system('clear')
         choosen_channel_dict = [ch for ch in channels if channel_choice['channel'] == ch['title']]
-        choosen_channel_content = cached_content if len(cached_content) != 0 else get_channel_content(url=choosen_channel_dict[0]['url'])
+        choosen_channel_content = []
+        choosen_channel_content = get_channel_content(url=choosen_channel_dict[0]['url'], content={'title': '', 'videos': []}) #TODO: Cache
 
         for video in choosen_channel_content['videos']:
             video_titles.append(video['title'])
@@ -85,8 +93,7 @@ def main(cached_channels=[], cached_content=[]):
 
         if video_choice['video'] == service_answers['PREV']:
             system('clear')
-            choosen_channel_content = [] #TODO: Think how to cache parsed content correctly
-            main(cached_channels=channels, cached_content=choosen_channel_content)
+            main(cached_channels=channels)
         else:
             choosen_video_dict = [v for v in choosen_channel_content['videos'] if video_choice['video'] == v['title']]
             system('clear')
