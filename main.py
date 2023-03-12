@@ -1,10 +1,40 @@
 from requests import get
 from bs4 import BeautifulSoup
-from json import load, dumps
+from json import load, dumps, dump
 from os import path, system
 from re import compile
 import inquirer
 from random import choice
+
+CACHE_FILENAME = 'cache.json'
+CACHE_PATH = path.abspath(CACHE_FILENAME)
+
+def get_cache():
+    if path.isfile(CACHE_PATH):
+        with open(CACHE_PATH) as cache_file:
+            return load(cache_file)
+    else:
+        return None
+
+def check_for_cached_channel(channel):
+    if not path.isfile(CACHE_PATH):
+        with open(CACHE_PATH, 'w', encoding='utf-8') as empty_cache_file:
+            dump({}, empty_cache_file, ensure_ascii=False)
+    cache = {}
+    with open(CACHE_PATH, 'r') as cache_file:
+        cache = load(cache_file)
+    if cache.get(channel):
+        return cache[channel]
+    else:
+        return None 
+
+def update_cache(channel, videos):
+    cache = {}
+    with open(CACHE_PATH, encoding='utf-8') as pre_cache: # Built-in json module sucks! Better use <os.open>
+        cache = load(pre_cache)
+    with open(CACHE_PATH, 'r+', encoding='utf-8') as cache_file:
+        cache[channel] = {'videos': videos}
+        dump(cache, cache_file, ensure_ascii=False)
 
 def get_random_user_agent():
     agents_list = []
@@ -76,8 +106,13 @@ def main(cached_channels=[]):
     else:
         system('clear')
         choosen_channel_dict = [ch for ch in channels if channel_choice['channel'] == ch['title']]
-        choosen_channel_content = []
-        choosen_channel_content = get_channel_content(url=choosen_channel_dict[0]['url'], content={'title': '', 'videos': []}) #TODO: Cache
+        choosen_channel_content = {}
+
+        if check_for_cached_channel(choosen_channel_dict[0]['title']):
+            choosen_channel_content = check_for_cached_channel(choosen_channel_dict[0]['title'])
+        else:
+            choosen_channel_content = get_channel_content(url=choosen_channel_dict[0]['url'], content={'title': '', 'videos': []})
+            update_cache(choosen_channel_dict[0]['title'], choosen_channel_content['videos'])
 
         for video in choosen_channel_content['videos']:
             video_titles.append(video['title'])
