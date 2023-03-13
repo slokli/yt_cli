@@ -7,11 +7,11 @@ It's a simple CLI for watching your favourite YouTube channels unnecessarily ope
 ## Installation and Usage
 
 Before installing the project, fill out the subscribtion list `channels.json` with IDs of channels that you'd like to watch.
-Such as script parses data from unofficial YouTube mirror https://yewtu.be, you can follow the link before and find channel's IDs there.
+Since the script parses data from unofficial YouTube mirror https://yewtu.be, you can follow the link before and find channel's IDs there.
 
 ### Important
 
-Such as YT_CLI isn't a video player, just a CLI, you should globally install mpv player in your OS.
+Since YT_CLI isn't a video player, just a CLI, you should globally install mpv player in your OS.
 
 #### Mac OS
 
