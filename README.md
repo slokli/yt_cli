@@ -11,7 +11,7 @@ Such as script parses data from unofficial YouTube mirror https://yewtu.be, you 
 
 ### Important
 
-Such as YT_CLI is't a video player, just a CLI, you should globally install mpv player in your OS.
+Such as YT_CLI isn't a video player, just a CLI, you should globally install mpv player in your OS.
 
 #### Mac OS
 
